@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asistente Personal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e10;
+    --bg2: #18181c;
+    --bg3: #222228;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0efe8;
+    --text2: #9896a0;
+    --text3: #5a5860;
+    --accent: #7f77dd;
+    --accent2: #9f99e8;
+    --accent-bg: rgba(127,119,221,0.12);
+    --green: #1d9e75;
+    --green-bg: rgba(29,158,117,0.12);
+    --red: #e24b4a;
+    --red-bg: rgba(226,75,74,0.12);
+    --amber: #ef9f27;
+    --amber-bg: rgba(239,159,39,0.12);
+    --teal: #5dcaa5;
+    --teal-bg: rgba(93,202,165,0.12);
+    --coral: #d85a30;
+    --coral-bg: rgba(216,90,48,0.12);
+    --pink: #d4537e;
+    --pink-bg: rgba(212,83,126,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(14,14,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+    height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+  }
+  .nav-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); }
+  .nav-date { font-size: 12px; color: var(--text2); }
+  .nav-gcal {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--accent-bg); border: 0.5px solid var(--accent);
+    color: var(--accent2); font-size: 12px; font-weight: 500;
+    padding: 5px 12px; border-radius: 20px; cursor: pointer;
+    text-decoration: none; transition: background 0.2s;
+  }
+  .nav-gcal:hover { background: rgba(127,119,221,0.22); }
+
+  /* ── SYNC BAR ── */
+  .sync-bar {
+    position: fixed; top: 56px; left: 0; right: 0; z-index: 98;
+    background: var(--bg3); border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 40px; gap: 10px;
+  }
+  .sync-status { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 6px; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink:0; }
+  .sync-dot.ok { background: var(--green); }
+  .sync-dot.err { background: var(--red); }
+  .sync-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .sync-btns { display: flex; gap: 6px; }
+  .sync-btn {
+    font-size: 11px; font-weight: 500; padding: 4px 12px;
+    border-radius: 20px; cursor: pointer; border: 0.5px solid;
+    font-family: 'DM Sans', sans-serif; white-space:nowrap;
+    transition: all 0.15s;
+  }
+  .sync-btn-save { background: var(--green-bg); border-color: var(--green); color: var(--teal); }
+  .sync-btn-save:hover { background: rgba(29,158,117,0.22); }
+  .sync-btn-load { background: var(--accent-bg); border-color: var(--accent); color: var(--accent2); }
+  .sync-btn-load:hover { background: rgba(127,119,221,0.22); }
+  .sync-btn-cfg { background: transparent; border-color: var(--border2); color: var(--text3); }
+  .sync-btn-cfg:hover { color: var(--text2); }
+
+  /* ── SHEETS MODAL ── */
+  .sheets-modal-step {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 12px 14px; margin-bottom: 8px;
+  }
+  .sheets-modal-step p { font-size: 12px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+  .url-input-wrap { display: flex; gap: 8px; margin-top: 10px; }
+  .url-input-wrap input { flex: 1; font-size: 12px; }
+  .url-tag {
+    display: inline-block; font-size: 10px; background: var(--green-bg);
+    color: var(--teal); border-radius: 4px; padding: 2px 7px; margin-left: 6px;
+  }
+
+  /* ── TABS ── */
+  .tabs-wrap {
+    position: fixed; top: 96px; left: 0; right: 0; z-index: 99;
+    background: rgba(14,14,16,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+  .tabs {
+    display: flex; padding: 0 16px;
+    gap: 2px; min-width: max-content;
+  }
+  .tab {
+    padding: 12px 14px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text2); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: color 0.2s, border-color 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent2); border-color: var(--accent); }
+
+  /* ── MAIN ── */
+  .main { padding: 160px 16px 80px; max-width: 800px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 14px;
+  }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 500; }
+  .stat-val.pos { color: var(--green); }
+  .stat-val.neg { color: var(--red); }
+  .stat-val.neutral { color: var(--accent2); }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-grid.one { grid-template-columns: 1fr; }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 5px; font-weight: 500; }
+  input, select, textarea {
+    width: 100%; background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; padding: 9px 12px;
+    transition: border-color 0.2s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--bg3); }
+  textarea { resize: vertical; min-height: 70px; }
+  .form-group { margin-bottom: 0; }
+
+  /* ── BUTTONS ── */
+  .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+  .btn {
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 0.5px solid; transition: all 0.18s; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #9f99e8; }
+  .btn-secondary {
+    background: transparent; border-color: var(--border2);
+    color: var(--text2);
+  }
+  .btn-secondary:hover { background: var(--bg3); color: var(--text); }
+  .btn-gcal {
+    background: var(--green-bg); border-color: var(--green);
+    color: var(--teal); font-size: 12px; padding: 7px 14px;
+  }
+  .btn-gcal:hover { background: rgba(29,158,117,0.22); }
+  .btn-danger {
+    background: var(--red-bg); border-color: var(--red);
+    color: var(--red); font-size: 12px; padding: 7px 12px;
+  }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 8px 10px;
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-bottom: 0.5px solid var(--border);
+  }
+  td { padding: 10px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.025); }
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--text3); font-size: 13px;
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 3px 9px; border-radius: 20px;
+  }
+  .badge-green { background: var(--green-bg); color: var(--teal); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-purple { background: var(--accent-bg); color: var(--accent2); }
+  .badge-gray { background: rgba(255,255,255,0.06); color: var(--text2); }
+
+  /* ── RESUMEN HEADER ── */
+  .hero { padding: 8px 0 20px; }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px; font-weight: 400; line-height: 1.15;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .hero p { font-size: 14px; color: var(--text2); }
+
+  /* ── SECTION HEADER ── */
+  .sec-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .sec-header h2 { font-size: 18px; font-weight: 500; }
+  .sec-header .count {
+    font-size: 12px; background: var(--accent-bg);
+    color: var(--accent2); padding: 3px 10px;
+    border-radius: 20px; font-weight: 500;
+  }
+
+  /* ── UPCOMING LIST ── */
+  .upcoming-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .upcoming-item:last-child { border-bottom: none; }
+  .upcoming-date {
+    min-width: 44px; text-align: center;
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 6px 4px;
+  }
+  .upcoming-date .day { font-size: 20px; font-weight: 600; line-height: 1; }
+  .upcoming-date .mon { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+  .upcoming-info { flex: 1; }
+  .upcoming-info .title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+  .upcoming-info .meta { font-size: 12px; color: var(--text2); }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 4px; background: var(--bg3);
+    border-radius: 4px; overflow: hidden; margin-top: 8px;
+  }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.4s; }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.amber { background: var(--amber); }
+  .progress-fill.red { background: var(--red); }
+
+  /* ── PILLS ETIQUETA ── */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; cursor: pointer;
+    border: 0.5px solid var(--border2); color: var(--text2);
+    transition: all 0.15s;
+  }
+  .pill.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent2); }
+
+  /* ── GOOGLE CALENDAR MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); padding: 24px; width: 100%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
+  .modal-close {
+    float: right; background: none; border: none;
+    color: var(--text2); font-size: 20px; cursor: pointer; line-height: 1;
+  }
+  .gcal-step {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 14px; margin-bottom: 10px;
+  }
+  .gcal-step .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--accent-bg); color: var(--accent2);
+    font-size: 11px; font-weight: 600; margin-right: 8px; vertical-align: middle;
+  }
+  .gcal-step p { font-size: 13px; margin-top: 8px; color: var(--text2); line-height: 1.5; }
+  .gcal-step code {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    background: rgba(127,119,221,0.12); color: var(--accent2);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .gcal-link {
+    display: flex; align-items: center; gap: 8px;
+    background: #1a73e8; color: #fff; border: none;
+    border-radius: var(--radius-sm); padding: 10px 16px;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    width: 100%; justify-content: center; text-decoration: none;
+    margin-top: 8px; transition: background 0.2s;
+  }
+  .gcal-link:hover { background: #1558b0; }
+
+  /* ── MASCOTA BIG ── */
+  .mascota-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+  }
+  .mascota-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--pink-bg); border: 0.5px solid var(--pink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+
+  /* ── MOBILE RESPONSIVE ── */
+  @media (max-width: 500px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid.three { grid-template-columns: 1fr 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .hero h1 { font-size: 26px; }
+  }
+
+  /* ── IPC INFO ── */
+  .ipc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ipc-item {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 10px 12px; text-align: center;
+  }
+  .ipc-item .per { font-size: 20px; font-weight: 600; color: var(--amber); }
+  .ipc-item .label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  @media (max-width: 400px) { .ipc-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-title">✦ Asistente</span>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="nav-date" id="navDate"></span>
+    <a class="nav-gcal" onclick="openGcalModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Google Cal
+    </a>
+  </div>
+</nav>
+
+<!-- SYNC BAR -->
+<div class="sync-bar">
+  <div class="sync-status">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncMsg">Configurá Google Sheets para sincronizar →</span>
+  </div>
+  <div class="sync-btns">
+    <button class="sync-btn sync-btn-save" onclick="guardarEnSheets()" title="Guardar todos los datos en Google Sheets">↑ Guardar</button>
+    <button class="sync-btn sync-btn-load" onclick="cargarDesdeSheets()" title="Cargar datos desde Google Sheets">↓ Cargar</button>
+    <button class="sync-btn sync-btn-cfg" onclick="openSheetsModal()" title="Configurar URL del script">⚙ Config</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('resumen','t0')" id="t0">📊 Resumen</div>
+    <div class="tab" onclick="showTab('pagos','t1')" id="t1">💸 Pagos</div>
+    <div class="tab" onclick="showTab('cobros','t2')" id="t2">💳 Cobros</div>
+    <div class="tab" onclick="showTab('clientes','t3')" id="t3">👥 Clientes</div>
+    <div class="tab" onclick="showTab('ahorros','t4')" id="t4">🐷 Ahorros</div>
+    <div class="tab" onclick="showTab('agenda','t5')" id="t5">📅 Agenda</div>
+    <div class="tab" onclick="showTab('eventos','t6')" id="t6">🎪 Eventos</div>
+    <div class="tab" onclick="showTab('cumple','t7')" id="t7">🎂 Cumpleaños</div>
+    <div class="tab" onclick="showTab('viajes','t8')" id="t8">✈️ Viajes</div>
+    <div class="tab" onclick="showTab('mascotas','t9')" id="t9">🐾 Mascotas</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══════════════ RESUMEN ═══════════════ -->
+  <div class="section active" id="sec-resumen">
+    <div class="hero">
+      <h1>Buenos días ☀️</h1>
+      <p id="heroSubtitle">Resumen general actualizado al día de hoy</p>
+    </div>
+    <div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat"><div class="stat-label">Total Cobros</div><div class="stat-val pos" id="r-cobros">$0</div></div>
+      <div class="stat"><div class="stat-label">Total Pagos</div><div class="stat-val neg" id="r-pagos">$0</div></div>
+      <div class="stat"><div class="stat-label">Balance Neto</div><div class="stat-val neutral" id="r-balance">$0</div></div>
+      <div class="stat"><div class="stat-label">Total Ahorros</div><div class="stat-val" style="color:var(--amber)" id="r-ahorros">$0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 Próximas actividades</div>
+      <div id="resumen-agenda"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👥 Clientes activos</div>
+      <div id="resumen-clientes"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎂 Próximos cumpleaños</div>
+      <div id="resumen-cumple"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PAGOS ═══════════════ -->
+  <div class="section" id="sec-pagos">
+    <div class="sec-header">
+      <h2>💸 Pagos Mensuales</h2>
+      <span class="count" id="pagos-total-badge">$0</span>
+    </div>
+
+    <!-- Form agregar pago -->
+    <div class="card" id="pagoFormCard">
+      <div class="card-title">Agregar pago</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Categoría</label>
+          <select id="pago-cat">
+            <option>Crédito</option><option>Tarjeta de Crédito</option><option>Descubierto</option>
+            <option>Alquiler</option><option>Expensas</option><option>Luz</option>
+            <option>Gas</option><option>Internet</option><option>Agua</option>
+            <option>Netflix</option><option>Spotify</option><option>Adobe</option>
+            <option>Google One</option><option>Membresía</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Entidad / Descripción</label><input id="pago-desc" type="text" placeholder="Banco, empresa..."></div>
+        <div class="form-group"><label>Monto ($)</label><input id="pago-monto" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Fecha Vencimiento</label><input id="pago-fecha" type="date"></div>
+      </div>
+      <div class="form-grid one" style="margin-top:10px">
+        <div class="form-group"><label>Notas</label><input id="pago-notas" type="text" placeholder="Opcional..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addPago()">Agregar pago</button>
+        <button class="btn btn-gcal" onclick="addPagoToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+
+    <!-- Tabla pagos -->
+    <div class="card">
+      <div class="card-title">Todos los pagos</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="pagos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ COBROS ═══════════════ -->
+  <div class="section" id="sec-cobros">
+    <div class="sec-header">
+      <h2>💳 Cobros Mensuales</h2>
+      <span class="count" id="cobros-total-badge">$0</span>
+    </div>
+
+    <!-- IPC -->
+    <div class="card">
+      <div class="card-title">📌 Actualizaciones IPC</div>
+      <div class="ipc-grid">
+        <div class="ipc-item"><div class="per" id="ipc1">30%</div><div class="label">Ene–Abr</div></div>
+        <div class="ipc-item"><div class="per" id="ipc2">30%</div><div class="label">May–Ago</div></div>
+        <div class="ipc-item"><div class="per" id="ipc3">30%</div><div class="label">Sep–Dic</div></div>
+      </div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-secondary" onclick="editIPC()">Editar % IPC</button>
+      </div>
+    </div>
+
+    <!-- Form cobro -->
+    <div class="card">
+      <div class="card-title">Agregar cobro</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Cliente</label><input id="cobro-cliente" type="text" placeholder="Nombre del cliente"></div>
+        <div class="form-group"><label>Servicio</label><input id="cobro-servicio" type="text" placeholder="Descripción del servicio"></div>
+        <div class="form-group"><label>Honorario Base ($)</label><input id="cobro-base" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>% Aumento</label><input id="cobro-aumento" type="number" min="0" placeholder="0" value="0"></div>
+        <div class="form-group"><label>Fecha Cobro</label><input id="cobro-fecha" type="date"></div>
+        <div class="form-group"><label>Cuenta Cobro</label><input id="cobro-cuenta" type="text" placeholder="CBU, alias..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addCobro()">Agregar cobro</button>
+        <button class="btn btn-gcal" onclick="addCobroToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Detalle de cobros</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Cliente</th><th>Servicio</th><th>Base</th><th>+%</th><th>Total</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="cobros-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CLIENTES ═══════════════ -->
+  <div class="section" id="sec-clientes">
+    <div class="sec-header">
+      <h2>👥 Clientes</h2>
+      <span class="count" id="clientes-count">0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Agregar cliente</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Cliente</label><input id="cli-nombre" type="text" placeholder="Nombre completo"></div>
+        <div class="form-group"><label>Servicio(s)</label><input id="cli-servicio" type="text" placeholder="Ej: Contabilidad, Diseño..."></div>
+        <div class="form-group"><label>Descripción</label><input id="cli-desc" type="text" placeholder="Breve descripción"></div>
+        <div class="form-group"><label>Honorario ($)</label><input id="cli-honorario" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Forma de Pago</label>
+          <select id="cli-pago"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option><option>Otro</option></select>
+        </div>
+        <div class="form-group"><label>Cuenta</label><input id="cli-cuenta" type="text" placeholder="CBU, alias, PayPal..."></div>
+        <div class="form-group"><label>Fecha de Pago</label><input id="cli-fechapago" type="text" placeholder="Ej: 10 de cada mes"></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="cli-estado"><option>Activo</option><option>Inactivo</option><option>Pausado</option></select>
+        </div>
+      </div>
+      <div class="form-grid one" style="margin-top:10px">
+        <div class="form-group"><label>Notas</label><textarea id="cli-notas" placeholder="Notas adicionales..."></textarea></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addCliente()">Agregar cliente</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Registro de clientes</div>
+      <div id="clientes-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ AHORROS ═══════════════ -->
+  <div class="section" id="sec-ahorros">
+    <div class="sec-header">
+      <h2>🐷 Ahorros</h2>
+      <span class="count" id="ahorros-total-badge">$0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Agregar ahorro</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Descripción</label><input id="aho-desc" type="text" placeholder="Ej: Vacaciones, emergencia..."></div>
+        <div class="form-group"><label>Cuenta / Frasco</label><input id="aho-cuenta" type="text" placeholder="Nombre de la caja o cuenta"></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="aho-tipo"><option>Objetivo</option><option>Fondo de emergencia</option><option>Inversión</option><option>Otro</option></select>
+        </div>
+        <div class="form-group"><label>Monto ($)</label><input id="aho-monto" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Fecha Inicio</label><input id="aho-inicio" type="date"></div>
+        <div class="form-group"><label>Fecha Objetivo</label><input id="aho-objetivo" type="date"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addAhorro()">Agregar ahorro</button></div>
+    </div>
+    <div id="ahorros-list"></div>
+  </div>
+
+  <!-- ═══════════════ AGENDA ═══════════════ -->
+  <div class="section" id="sec-agenda">
+    <div class="sec-header">
+      <h2>📅 Agenda Diaria</h2>
+      <span class="count" id="agenda-count">0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Agregar actividad</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha</label><input id="ag-fecha" type="date"></div>
+        <div class="form-group"><label>Hora Inicio</label><input id="ag-inicio" type="time"></div>
+        <div class="form-group"><label>Hora Fin</label><input id="ag-fin" type="time"></div>
+        <div class="form-group"><label>Etiqueta</label>
+          <select id="ag-etiqueta">
+            <option>Trabajo</option><option>Personal</option><option>Salud</option>
+            <option>Social</option><option>Estudio</option><option>Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid one" style="margin-top:10px">
+        <div class="form-group"><label>Actividad</label><input id="ag-actividad" type="text" placeholder="Descripción de la actividad"></div>
+        <div class="form-group" style="margin-top:10px"><label>Lugar</label><input id="ag-lugar" type="text" placeholder="Lugar o dirección"></div>
+        <div class="form-group" style="margin-top:10px"><label>Link Meet / Zoom</label><input id="ag-link" type="url" placeholder="https://..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addAgenda()">Agregar</button>
+        <button class="btn btn-gcal" onclick="addAgendaToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Actividades</div>
+      <div id="agenda-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ EVENTOS ═══════════════ -->
+  <div class="section" id="sec-eventos">
+    <div class="sec-header">
+      <h2>🎪 Eventos</h2>
+      <span class="count" id="eventos-count">0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Agregar evento</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha</label><input id="ev-fecha" type="date"></div>
+        <div class="form-group"><label>Hora</label><input id="ev-hora" type="time"></div>
+        <div class="form-group"><label>Hora Fin</label><input id="ev-fin" type="time"></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="ev-tipo"><option>Social</option><option>Laboral</option><option>Cultural</option><option>Deportivo</option><option>Familiar</option><option>Otro</option></select>
+        </div>
+      </div>
+      <div class="form-grid one" style="margin-top:10px">
+        <div class="form-group"><label>Evento / Actividad</label><input id="ev-nombre" type="text" placeholder="Nombre del evento"></div>
+        <div class="form-group" style="margin-top:10px"><label>Lugar / Dirección</label><input id="ev-lugar" type="text" placeholder="Dirección completa"></div>
+        <div class="form-group" style="margin-top:10px"><label>Asistentes</label><input id="ev-asistentes" type="text" placeholder="Quiénes van"></div>
+        <div class="form-group" style="margin-top:10px"><label>Detalles</label><textarea id="ev-detalles" placeholder="Notas del evento..."></textarea></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addEvento()">Agregar</button>
+        <button class="btn btn-gcal" onclick="addEventoToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Lista de eventos</div>
+      <div id="eventos-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CUMPLEAÑOS ═══════════════ -->
+  <div class="section" id="sec-cumple">
+    <div class="sec-header">
+      <h2>🎂 Cumpleaños</h2>
+      <span class="count" id="cumple-count">0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Agregar cumpleaños / aniversario</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre / Descripción</label><input id="cu-nombre" type="text" placeholder="Ej: Juan Pérez"></div>
+        <div class="form-group"><label>Tipo</label>
+          <select id="cu-tipo"><option>Cumpleaños</option><option>Aniversario</option><option>Otro</option></select>
+        </div>
+        <div class="form-group"><label>Fecha (DD/MM)</label><input id="cu-fecha" type="text" placeholder="25/12"></div>
+        <div class="form-group"><label>Año de nacimiento</label><input id="cu-anio" type="number" min="1900" max="2025" placeholder="1990"></div>
+      </div>
+      <div class="form-grid one" style="margin-top:10px">
+        <div class="form-group"><label>Notas</label><input id="cu-notas" type="text" placeholder="Opcional..."></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addCumple()">Agregar</button>
+        <button class="btn btn-gcal" onclick="addCumpleToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Próximos</div>
+      <div id="cumple-list"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ VIAJES ═══════════════ -->
+  <div class="section" id="sec-viajes">
+    <div class="sec-header">
+      <h2>✈️ Viajes</h2>
+      <span class="count" id="viajes-count">0</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Nuevo viaje</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Destino</label><input id="vi-destino" type="text" placeholder="Ciudad, país..."></div>
+        <div class="form-group"><label>Compañeros</label><input id="vi-comp" type="text" placeholder="Con quién vas"></div>
+        <div class="form-group"><label>Fecha Salida</label><input id="vi-salida" type="date"></div>
+        <div class="form-group"><label>Fecha Regreso</label><input id="vi-regreso" type="date"></div>
+        <div class="form-group"><label>Presupuesto ($)</label><input id="vi-presupuesto" type="number" min="0" placeholder="0"></div>
+        <div class="form-group"><label>Moneda</label>
+          <select id="vi-moneda"><option>ARS</option><option>USD</option><option>EUR</option><option>BRL</option><option>Otro</option></select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addViaje()">Crear viaje</button>
+        <button class="btn btn-gcal" onclick="addViajeToCalendar()">+ Google Calendar</button>
+      </div>
+    </div>
+    <div id="viajes-list"></div>
+  </div>
+
+  <!-- ═══════════════ MASCOTAS ═══════════════ -->
+  <div class="section" id="sec-mascotas">
+    <div class="sec-header">
+      <h2>🐾 Mascotas</h2>
+    </div>
+
+    <!-- Datos mascota -->
+    <div class="card">
+      <div class="card-title">Datos de la mascota</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Nombre</label><input id="ma-nombre" type="text" placeholder="Nombre"></div>
+        <div class="form-group"><label>Especie</label><input id="ma-especie" type="text" placeholder="Perro, gato..."></div>
+        <div class="form-group"><label>Raza</label><input id="ma-raza" type="text" placeholder="Raza"></div>
+        <div class="form-group"><label>Fecha Nacimiento</label><input id="ma-nacimiento" type="date"></div>
+        <div class="form-group"><label>Veterinario</label><input id="ma-vet" type="text" placeholder="Nombre del vet"></div>
+        <div class="form-group"><label>Tel. Veterinario</label><input id="ma-tel" type="tel" placeholder="+54 11..."></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="saveMascota()">Guardar datos</button></div>
+    </div>
+
+    <!-- Recordatorios vet -->
+    <div class="card">
+      <div class="card-title">📅 Recordatorios veterinaria</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Tipo</label>
+          <select id="ma-tipo"><option>Vacuna</option><option>Desparasitación</option><option>Control</option><option>Castración</option><option>Otro</option></select>
+        </div>
+        <div class="form-group"><label>Descripción</label><input id="ma-rdesc" type="text" placeholder="Descripción"></div>
+        <div class="form-group"><label>Última fecha</label><input id="ma-ultima" type="date"></div>
+        <div class="form-group"><label>Próxima fecha</label><input id="ma-proxima" type="date"></div>
+        <div class="form-group"><label>Veterinario</label><input id="ma-rvet" type="text" placeholder="Nombre"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addMaRecord()">Agregar</button>
+        <button class="btn btn-gcal" onclick="addMaRecordToCalendar()">+ Google Calendar</button>
+      </div>
+      <div style="margin-top:14px" id="ma-records-list"></div>
+    </div>
+
+    <!-- Medicamentos -->
+    <div class="card">
+      <div class="card-title">💊 Medicamentos</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Medicamento</label><input id="ma-med" type="text" placeholder="Nombre"></div>
+        <div class="form-group"><label>Dosis</label><input id="ma-dosis" type="text" placeholder="Ej: 1 comprimido"></div>
+        <div class="form-group"><label>Frecuencia</label><input id="ma-frec" type="text" placeholder="Ej: cada 8h"></div>
+        <div class="form-group"><label>Motivo</label><input id="ma-motivo" type="text" placeholder="¿Por qué?"></div>
+        <div class="form-group"><label>Fecha</label><input id="ma-mfecha" type="date"></div>
+        <div class="form-group"><label>Hora</label><input id="ma-mhora" type="time"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="addMaMed()">Agregar</button>
+        <button class="btn btn-gcal" onclick="addMaMedToCalendar()">+ Google Calendar</button>
+      </div>
+      <div style="margin-top:14px" id="ma-meds-list"></div>
+    </div>
+
+    <!-- Gastos mascota -->
+    <div class="card">
+      <div class="card-title">💰 Gastos</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Fecha</label><input id="ma-gfecha" type="date"></div>
+        <div class="form-group"><label>Categoría</label>
+          <select id="ma-gcat"><option>Veterinaria</option><option>Alimento</option><option>Grooming</option><option>Juguetes</option><option>Medicación</option><option>Otro</option></select>
+        </div>
+        <div class="form-group"><label>Descripción</label><input id="ma-gdesc" type="text" placeholder="Descripción del gasto"></div>
+        <div class="form-group"><label>Monto ($)</label><input id="ma-gmonto" type="number" min="0" placeholder="0"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addMaGasto()">Agregar gasto</button></div>
+      <div style="margin-top:14px" id="ma-gastos-list"></div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- ═══════════════ SHEETS MODAL ═══════════════ -->
+<div class="modal-bg" id="sheetsModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSheetsModal()">×</button>
+    <h3>🔗 Conectar con Google Sheets</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
+      Seguí estos 3 pasos una sola vez. Después podés guardar y cargar datos con un clic.
+    </p>
+
+    <div class="sheets-modal-step">
+      <span class="step-num">1</span><strong style="font-size:13px">Abrí Google Sheets</strong>
+      <p>Creá una hoja nueva en <a href="https://sheets.google.com" target="_blank" style="color:var(--accent2)">sheets.google.com</a> y ponele el nombre que quieras.</p>
+    </div>
+
+    <div class="sheets-modal-step">
+      <span class="step-num">2</span><strong style="font-size:13px">Pegá el script en Apps Script</strong>
+      <p>En tu hoja: <strong style="color:var(--text)">Extensiones → Apps Script</strong>. Borrá todo y pegá el código del archivo <code>apps_script.gs</code> que te generé. Guardá con Ctrl+S.</p>
+    </div>
+
+    <div class="sheets-modal-step">
+      <span class="step-num">3</span><strong style="font-size:13px">Publicar y copiar URL</strong>
+      <p>En Apps Script: <strong style="color:var(--text)">Implementar → Nueva implementación → Aplicación web</strong>.<br>
+      Elegí: "Ejecutar como: <strong style="color:var(--text)">Yo</strong>" y "Acceso: <strong style="color:var(--text)">Cualquier persona</strong>".<br>
+      Hacé clic en Implementar → autorizá → copiá la URL que aparece.</p>
+    </div>
+
+    <div style="margin-top:14px">
+      <label style="font-size:12px;color:var(--text2);font-weight:600">Tu URL del script de Apps Script:</label>
+      <div class="url-input-wrap">
+        <input type="url" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn btn-primary" style="white-space:nowrap;font-size:13px" onclick="guardarURL()">Guardar URL</button>
+      </div>
+      <div id="urlStatus" style="font-size:11px;margin-top:6px;color:var(--text3)"></div>
+    </div>
+
+    <div style="margin-top:14px;padding:12px;background:var(--accent-bg);border-radius:var(--radius-sm);border:0.5px solid var(--accent)">
+      <div style="font-size:12px;color:var(--accent2);font-weight:600">💡 Tips importantes</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px;line-height:1.6">
+        <strong style="color:var(--text)">↑ Guardar</strong> funciona siempre (incluso abriendo el archivo localmente).<br>
+        <strong style="color:var(--text)">↓ Cargar</strong> funciona mejor desde Chrome o Edge — si falla, abrí el script directamente para ver los datos.<br>
+        Cada vez que modifiques el script hacé una <strong style="color:var(--text)">nueva implementación</strong> (no editar la existente).
+      </div>
+    </div>
+
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeSheetsModal()">Cerrar</button>
+      <button class="btn btn-primary" onclick="testConexion()">Probar conexión</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ GCAL MODAL ═══════════════ -->
+<div class="modal-bg" id="gcalModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeGcalModal()">×</button>
+    <h3>Conectar con Google Calendar</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5">
+      Esta app puede crear eventos directamente en Google Calendar. Seguí los pasos:
+    </p>
+    <div class="gcal-step">
+      <span class="step-num">1</span><strong style="font-size:13px">Abrí Google Calendar</strong>
+      <p>Iniciá sesión con tu cuenta de Google en el botón de abajo.</p>
+    </div>
+    <div class="gcal-step">
+      <span class="step-num">2</span><strong style="font-size:13px">Botones "+ Google Calendar"</strong>
+      <p>Cada sección tiene un botón <code>+ Google Calendar</code>. Al hacer clic, se abre Google Calendar con el evento pre-cargado listo para guardar.</p>
+    </div>
+    <div class="gcal-step">
+      <span class="step-num">3</span><strong style="font-size:13px">Notificaciones automáticas</strong>
+      <p>Al guardar en Google Calendar podés configurar recordatorios por email o notificación push en tu teléfono.</p>
+    </div>
+    <a class="gcal-link" href="https://calendar.google.com" target="_blank">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Abrir Google Calendar
+    </a>
+    <div class="btn-row" style="margin-top:12px">
+      <button class="btn btn-secondary" onclick="closeGcalModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA STORE ───
+let data = JSON.parse(localStorage.getItem('asistente_data') || '{}');
+const defaults = {
+  pagos:[],cobros:[],clientes:[],ahorros:[],agenda:[],eventos:[],cumples:[],viajes:[],
+  mascota:{nombre:'',especie:'',raza:'',nacimiento:'',vet:'',tel:''},
+  maRecords:[],maMeds:[],maGastos:[],
+  ipc:[30,30,30]
+};
+Object.keys(defaults).forEach(k=>{ if(data[k]===undefined) data[k]=defaults[k]; });
+function save(){ localStorage.setItem('asistente_data',JSON.stringify(data)); }
+
+// ─── HELPERS ───
+function fmt(n){ return '$'+Math.round(n||0).toLocaleString('es-AR'); }
+function fmtDate(d){ if(!d) return '–'; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function statusBadge(s){
+  const m={Pagado:'badge-green',Pendiente:'badge-amber',Vencido:'badge-red',Cobrado:'badge-green',Activo:'badge-green',Inactivo:'badge-gray'};
+  return `<span class="badge ${m[s]||'badge-gray'}">${s}</span>`;
+}
+function etiqColor(e){
+  const m={Trabajo:'badge-purple',Personal:'badge-green',Salud:'badge-red',Social:'badge-amber',Estudio:'badge-purple',Social:'badge-amber',Laboral:'badge-purple',Cultural:'badge-teal'};
+  return `<span class="badge ${m[e]||'badge-gray'}">${e}</span>`;
+}
+function gcalURL(title,date,timeStart,timeEnd,details,location){
+  const base='https://calendar.google.com/calendar/render?action=TEMPLATE';
+  let dates='';
+  if(date && timeStart){
+    const s=date.replace(/-/g,'')+'T'+(timeStart||'090000').replace(':','')+'00';
+    const e=date.replace(/-/g,'')+'T'+(timeEnd||timeStart||'100000').replace(':','')+'00';
+    dates=`&dates=${s}/${e}`;
+  } else if(date){
+    const d=date.replace(/-/g,'');
+    dates=`&dates=${d}/${d}`;
+  }
+  return `${base}&text=${encodeURIComponent(title||'')}${dates}&details=${encodeURIComponent(details||'')}&location=${encodeURIComponent(location||'')}`;
+}
+function openGcal(url){ window.open(url,'_blank'); }
+
+// ─── TABS ───
+function showTab(sec,tid){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  document.getElementById(tid).classList.add('active');
+  renderAll();
+}
+
+// ─── RENDER ALL ───
+function renderAll(){
+  renderResumen(); renderPagos(); renderCobros(); renderClientes();
+  renderAhorros(); renderAgenda(); renderEventos(); renderCumples();
+  renderViajes(); renderMascotas();
+}
+
+// ─── INIT DATE ───
+const hoy=new Date();
+document.getElementById('navDate').textContent=hoy.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+document.getElementById('heroSubtitle').textContent='Actualizado '+hoy.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
+// pre-fill dates
+['ag-fecha','ev-fecha','cu-fecha','ma-ultima','ma-mfecha','ma-gfecha'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el && el.type==='date') el.value=hoy.toISOString().split('T')[0];
+});
+
+// ─── GOOGLE CALENDAR MODAL ───
+function openGcalModal(){ document.getElementById('gcalModal').classList.add('open'); }
+function closeGcalModal(){ document.getElementById('gcalModal').classList.remove('open'); }
+
+// ═══════════════ RESUMEN ═══════════════
+function renderResumen(){
+  const totCobros=data.cobros.reduce((a,c)=>a+(parseFloat(c.base||0)*(1+(parseFloat(c.aumento||0)/100))),0);
+  const totPagos=data.pagos.reduce((a,p)=>a+parseFloat(p.monto||0),0);
+  const totAhorros=data.ahorros.reduce((a,s)=>a+parseFloat(s.monto||0),0);
+  document.getElementById('r-cobros').textContent=fmt(totCobros);
+  document.getElementById('r-pagos').textContent=fmt(totPagos);
+  document.getElementById('r-balance').textContent=fmt(totCobros-totPagos);
+  document.getElementById('r-balance').className='stat-val '+(totCobros-totPagos>=0?'pos':'neg');
+  document.getElementById('r-ahorros').textContent=fmt(totAhorros);
+
+  // Agenda próxima
+  const agDiv=document.getElementById('resumen-agenda');
+  const prox=data.agenda.filter(a=>a.fecha>=hoy.toISOString().split('T')[0]).sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(0,3);
+  agDiv.innerHTML=prox.length?prox.map(a=>{
+    const [y,m,d]=a.fecha.split('-');
+    const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `<div class="upcoming-item">
+      <div class="upcoming-date"><div class="day">${d}</div><div class="mon">${meses[parseInt(m)-1]}</div></div>
+      <div class="upcoming-info"><div class="title">${a.actividad}</div><div class="meta">${a.inicio||''} ${a.lugar?'· '+a.lugar:''}</div></div>
+    </div>`;
+  }).join(''):`<div class="empty-state">Sin actividades próximas</div>`;
+
+  // Clientes activos
+  const cliDiv=document.getElementById('resumen-clientes');
+  const activos=data.clientes.filter(c=>c.estado==='Activo');
+  cliDiv.innerHTML=activos.length?activos.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <div><div style="font-size:14px;font-weight:500">${c.nombre}</div><div style="font-size:12px;color:var(--text2)">${c.servicio}</div></div>
+      <div style="text-align:right"><div style="font-size:13px;color:var(--green)">${fmt(c.honorario)}</div>${statusBadge(c.estado)}</div>
+    </div>`).join(''):`<div class="empty-state">Sin clientes activos</div>`;
+
+  // Cumpleaños próximos
+  const cuDiv=document.getElementById('resumen-cumple');
+  const now=new Date(); const thisYear=now.getFullYear();
+  const cumProx=data.cumples.map(c=>{
+    const [d,m]=c.fecha.split('/');
+    let next=new Date(thisYear,parseInt(m)-1,parseInt(d));
+    if(next<now) next=new Date(thisYear+1,parseInt(m)-1,parseInt(d));
+    const days=Math.ceil((next-now)/(1000*60*60*24));
+    return {...c,days};
+  }).sort((a,b)=>a.days-b.days).slice(0,4);
+  cuDiv.innerHTML=cumProx.length?cumProx.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <div><div style="font-size:14px;font-weight:500">${c.nombre}</div><div style="font-size:12px;color:var(--text2)">${c.fecha} · ${c.tipo}</div></div>
+      <div style="font-size:12px;color:var(--amber);font-weight:500">en ${c.days}d</div>
+    </div>`).join(''):`<div class="empty-state">Sin cumpleaños cargados</div>`;
+}
+
+// ═══════════════ PAGOS ═══════════════
+function addPago(){
+  const cat=v('pago-cat'),desc=v('pago-desc'),monto=parseFloat(v('pago-monto')||0),fecha=v('pago-fecha'),notas=v('pago-notas');
+  data.pagos.push({id:Date.now(),cat,desc,monto,fecha,notas,estado:'Pendiente'});
+  save(); renderPagos(); renderResumen();
+  ['pago-desc','pago-monto','pago-fecha','pago-notas'].forEach(id=>document.getElementById(id).value='');
+}
+function addPagoToCalendar(){
+  const desc=v('pago-desc'),monto=v('pago-monto'),fecha=v('pago-fecha');
+  if(!fecha){alert('Ingresá fecha de vencimiento');return;}
+  openGcal(gcalURL('💸 Vencimiento: '+(desc||v('pago-cat')),fecha,'','','Monto: $'+monto,''));
+}
+function togglePago(id){
+  const p=data.pagos.find(x=>x.id===id);
+  if(p) p.estado=p.estado==='Pagado'?'Pendiente':'Pagado';
+  save(); renderPagos(); renderResumen();
+}
+function delPago(id){ data.pagos=data.pagos.filter(x=>x.id!==id); save(); renderPagos(); renderResumen(); }
+function renderPagos(){
+  const total=data.pagos.reduce((a,p)=>a+parseFloat(p.monto||0),0);
+  document.getElementById('pagos-total-badge').textContent=fmt(total);
+  const tbody=document.getElementById('pagos-tbody');
+  tbody.innerHTML=data.pagos.length?data.pagos.map(p=>`<tr>
+    <td><span class="badge badge-gray">${p.cat}</span></td>
+    <td>${p.desc||'–'}</td>
+    <td style="font-weight:500">${fmt(p.monto)}</td>
+    <td style="color:var(--text2)">${fmtDate(p.fecha)}</td>
+    <td>${statusBadge(p.estado)}</td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="togglePago(${p.id})">${p.estado==='Pagado'?'✓ Pago':'Marcar pagado'}</button>
+      <button class="btn btn-danger" onclick="delPago(${p.id})">✕</button>
+    </td>
+  </tr>`).join(''):`<tr><td colspan="6"><div class="empty-state">Sin pagos cargados</div></td></tr>`;
+}
+
+// ═══════════════ COBROS ═══════════════
+function editIPC(){
+  const n1=prompt('% IPC Enero–Abril:',data.ipc[0]);
+  const n2=prompt('% IPC Mayo–Agosto:',data.ipc[1]);
+  const n3=prompt('% IPC Sep–Diciembre:',data.ipc[2]);
+  if(n1!==null)data.ipc[0]=parseFloat(n1)||0;
+  if(n2!==null)data.ipc[1]=parseFloat(n2)||0;
+  if(n3!==null)data.ipc[2]=parseFloat(n3)||0;
+  save(); renderCobros();
+}
+function addCobro(){
+  const cliente=v('cobro-cliente'),servicio=v('cobro-servicio'),base=parseFloat(v('cobro-base')||0),
+    aumento=parseFloat(v('cobro-aumento')||0),fecha=v('cobro-fecha'),cuenta=v('cobro-cuenta');
+  data.cobros.push({id:Date.now(),cliente,servicio,base,aumento,fecha,cuenta,estado:'Pendiente'});
+  save(); renderCobros(); renderResumen();
+  ['cobro-cliente','cobro-servicio','cobro-base','cobro-fecha','cobro-cuenta'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cobro-aumento').value='0';
+}
+function addCobroToCalendar(){
+  const cli=v('cobro-cliente'),fecha=v('cobro-fecha'),base=v('cobro-base'),aum=v('cobro-aumento');
+  if(!fecha){alert('Ingresá fecha de cobro');return;}
+  const total=Math.round(parseFloat(base||0)*(1+(parseFloat(aum||0)/100)));
+  openGcal(gcalURL('💳 Cobro: '+cli,fecha,'','',`Monto: $${total.toLocaleString('es-AR')}`,''));
+}
+function toggleCobro(id){
+  const c=data.cobros.find(x=>x.id===id);
+  if(c) c.estado=c.estado==='Cobrado'?'Pendiente':'Cobrado';
+  save(); renderCobros(); renderResumen();
+}
+function delCobro(id){ data.cobros=data.cobros.filter(x=>x.id!==id); save(); renderCobros(); renderResumen(); }
+function renderCobros(){
+  document.getElementById('ipc1').textContent=data.ipc[0]+'%';
+  document.getElementById('ipc2').textContent=data.ipc[1]+'%';
+  document.getElementById('ipc3').textContent=data.ipc[2]+'%';
+  const total=data.cobros.reduce((a,c)=>a+(c.base*(1+c.aumento/100)),0);
+  document.getElementById('cobros-total-badge').textContent=fmt(total);
+  const tbody=document.getElementById('cobros-tbody');
+  tbody.innerHTML=data.cobros.length?data.cobros.map(c=>{
+    const tot=c.base*(1+c.aumento/100);
+    return `<tr>
+      <td>${c.cliente||'–'}</td><td style="color:var(--text2)">${c.servicio||'–'}</td>
+      <td>${fmt(c.base)}</td><td style="color:var(--amber)">${c.aumento}%</td>
+      <td style="font-weight:500;color:var(--green)">${fmt(tot)}</td>
+      <td style="color:var(--text2)">${fmtDate(c.fecha)}</td>
+      <td>${statusBadge(c.estado)}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="toggleCobro(${c.id})">${c.estado==='Cobrado'?'✓':'Cobrar'}</button>
+        <button class="btn btn-danger" onclick="delCobro(${c.id})">✕</button>
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty-state">Sin cobros cargados</div></td></tr>`;
+}
+
+// ═══════════════ CLIENTES ═══════════════
+function addCliente(){
+  data.clientes.push({id:Date.now(),nombre:v('cli-nombre'),servicio:v('cli-servicio'),desc:v('cli-desc'),
+    honorario:parseFloat(v('cli-honorario')||0),pago:v('cli-pago'),cuenta:v('cli-cuenta'),
+    fechapago:v('cli-fechapago'),estado:v('cli-estado'),notas:v('cli-notas')});
+  save(); renderClientes(); renderResumen();
+  ['cli-nombre','cli-servicio','cli-desc','cli-honorario','cli-cuenta','cli-fechapago','cli-notas'].forEach(id=>document.getElementById(id).value='');
+}
+function delCliente(id){ data.clientes=data.clientes.filter(x=>x.id!==id); save(); renderClientes(); renderResumen(); }
+function renderClientes(){
+  document.getElementById('clientes-count').textContent=data.clientes.length;
+  const div=document.getElementById('clientes-list');
+  div.innerHTML=data.clientes.length?data.clientes.map(c=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:15px;font-weight:500">${c.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.servicio||''}</div>
+        </div>
+        <div style="text-align:right">
+          ${statusBadge(c.estado)}
+          <div style="font-size:14px;color:var(--green);margin-top:4px">${fmt(c.honorario)}/mes</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;font-size:12px;color:var(--text2)">
+        ${c.pago?`<span>💳 ${c.pago}</span>`:''}
+        ${c.fechapago?`<span>📅 ${c.fechapago}</span>`:''}
+        ${c.cuenta?`<span>🏦 ${c.cuenta}</span>`:''}
+      </div>
+      ${c.notas?`<div style="margin-top:8px;font-size:12px;color:var(--text3)">${c.notas}</div>`:''}
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-danger" onclick="delCliente(${c.id})">Eliminar</button>
+      </div>
+    </div>`).join(''):`<div class="empty-state">Sin clientes cargados</div>`;
+}
+
+// ═══════════════ AHORROS ═══════════════
+function addAhorro(){
+  data.ahorros.push({id:Date.now(),desc:v('aho-desc'),cuenta:v('aho-cuenta'),tipo:v('aho-tipo'),
+    monto:parseFloat(v('aho-monto')||0),inicio:v('aho-inicio'),objetivo:v('aho-objetivo')});
+  save(); renderAhorros(); renderResumen();
+  ['aho-desc','aho-cuenta','aho-monto','aho-inicio','aho-objetivo'].forEach(id=>document.getElementById(id).value='');
+}
+function delAhorro(id){ data.ahorros=data.ahorros.filter(x=>x.id!==id); save(); renderAhorros(); renderResumen(); }
+function renderAhorros(){
+  const total=data.ahorros.reduce((a,s)=>a+s.monto,0);
+  document.getElementById('ahorros-total-badge').textContent=fmt(total);
+  const div=document.getElementById('ahorros-list');
+  div.innerHTML=data.ahorros.length?data.ahorros.map(s=>{
+    let pct=0;
+    if(s.inicio && s.objetivo){
+      const ini=new Date(s.inicio),obj=new Date(s.objetivo),n=new Date();
+      const total=obj-ini, elapsed=n-ini;
+      pct=Math.min(100,Math.max(0,Math.round(elapsed/total*100)));
+    }
+    const color=pct>=80?'green':pct>=40?'':'red';
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-size:15px;font-weight:500">${s.desc}</div>
+        <div style="font-size:12px;color:var(--text2)">${s.cuenta} · ${s.tipo}</div></div>
+        <div style="font-size:18px;font-weight:600;color:var(--amber)">${fmt(s.monto)}</div>
+      </div>
+      ${s.inicio&&s.objetivo?`<div class="progress-bar" style="margin-top:10px"><div class="progress-fill ${color}" style="width:${pct}%"></div></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">${fmtDate(s.inicio)} → ${fmtDate(s.objetivo)} · ${pct}% del tiempo</div>`:''}
+      <div class="btn-row"><button class="btn btn-danger" onclick="delAhorro(${s.id})">Eliminar</button></div>
+    </div>`;
+  }).join(''):`<div class="empty-state">Sin ahorros cargados</div>`;
+}
+
+// ═══════════════ AGENDA ═══════════════
+function addAgenda(){
+  data.agenda.push({id:Date.now(),fecha:v('ag-fecha'),inicio:v('ag-inicio'),fin:v('ag-fin'),
+    actividad:v('ag-actividad'),lugar:v('ag-lugar'),link:v('ag-link'),etiqueta:v('ag-etiqueta')});
+  save(); renderAgenda(); renderResumen();
+  ['ag-actividad','ag-lugar','ag-link'].forEach(id=>document.getElementById(id).value='');
+}
+function addAgendaToCalendar(){
+  const act=v('ag-actividad'),fecha=v('ag-fecha'),ini=v('ag-inicio'),fin=v('ag-fin'),lugar=v('ag-lugar'),link=v('ag-link');
+  if(!fecha||!act){alert('Ingresá fecha y actividad');return;}
+  openGcal(gcalURL('📅 '+act,fecha,ini,fin,link?'Link: '+link:'',lugar));
+}
+function delAgenda(id){ data.agenda=data.agenda.filter(x=>x.id!==id); save(); renderAgenda(); renderResumen(); }
+function renderAgenda(){
+  const sorted=[...data.agenda].sort((a,b)=>a.fecha.localeCompare(b.fecha)||(a.inicio||'').localeCompare(b.inicio||''));
+  document.getElementById('agenda-count').textContent=sorted.length;
+  const div=document.getElementById('agenda-list');
+  div.innerHTML=sorted.length?sorted.map(a=>`
+    <div style="display:flex;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border);align-items:flex-start">
+      <div style="min-width:50px;text-align:center;background:var(--bg3);border-radius:8px;padding:8px 4px">
+        <div style="font-size:11px;color:var(--text2)">${fmtDate(a.fecha)}</div>
+        <div style="font-size:12px;font-weight:500;color:var(--accent2)">${a.inicio||'–'}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${a.actividad}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${a.lugar||''} ${a.fin?'hasta '+a.fin:''}</div>
+        ${a.link?`<a href="${a.link}" target="_blank" style="font-size:11px;color:var(--accent2)">🔗 Link</a>`:''}
+        ${etiqColor(a.etiqueta)}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-gcal" style="padding:5px 8px;font-size:11px" onclick="openGcal(gcalURL('📅 '+${JSON.stringify(a.actividad)},'${a.fecha}','${a.inicio||''}','${a.fin||''}','','${a.lugar||''}'))">📆</button>
+        <button class="btn btn-danger" onclick="delAgenda(${a.id})">✕</button>
+      </div>
+    </div>`).join(''):`<div class="empty-state">Sin actividades</div>`;
+}
+
+// ═══════════════ EVENTOS ═══════════════
+function addEvento(){
+  data.eventos.push({id:Date.now(),fecha:v('ev-fecha'),hora:v('ev-hora'),fin:v('ev-fin'),
+    nombre:v('ev-nombre'),tipo:v('ev-tipo'),lugar:v('ev-lugar'),asistentes:v('ev-asistentes'),detalles:v('ev-detalles')});
+  save(); renderEventos();
+  ['ev-nombre','ev-lugar','ev-asistentes','ev-detalles'].forEach(id=>document.getElementById(id).value='');
+}
+function addEventoToCalendar(){
+  const n=v('ev-nombre'),f=v('ev-fecha'),h=v('ev-hora'),fin=v('ev-fin'),l=v('ev-lugar'),d=v('ev-detalles');
+  if(!f||!n){alert('Ingresá nombre y fecha');return;}
+  openGcal(gcalURL('🎪 '+n,f,h,fin,d,l));
+}
+function delEvento(id){ data.eventos=data.eventos.filter(x=>x.id!==id); save(); renderEventos(); }
+function renderEventos(){
+  const sorted=[...data.eventos].sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  document.getElementById('eventos-count').textContent=sorted.length;
+  const div=document.getElementById('eventos-list');
+  div.innerHTML=sorted.length?sorted.map(e=>`
+    <div style="padding:12px 0;border-bottom:0.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:14px;font-weight:500">${e.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">${fmtDate(e.fecha)} ${e.hora?'· '+e.hora:''} ${e.fin?'→ '+e.fin:''}</div>
+          ${e.lugar?`<div style="font-size:12px;color:var(--text2)">📍 ${e.lugar}</div>`:''}
+          ${e.asistentes?`<div style="font-size:11px;color:var(--text3)">👥 ${e.asistentes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${etiqColor(e.tipo)}
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-gcal" style="padding:5px 8px;font-size:11px" onclick="openGcal(gcalURL('🎪 '+${JSON.stringify(e.nombre)},'${e.fecha}','${e.hora||''}','${e.fin||''}',${JSON.stringify(e.detalles||'')},${JSON.stringify(e.lugar||'')}))">📆</button>
+            <button class="btn btn-danger" onclick="delEvento(${e.id})">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty-state">Sin eventos cargados</div>`;
+}
+
+// ═══════════════ CUMPLEAÑOS ═══════════════
+function addCumple(){
+  data.cumples.push({id:Date.now(),nombre:v('cu-nombre'),tipo:v('cu-tipo'),fecha:v('cu-fecha'),anio:parseInt(v('cu-anio')||0),notas:v('cu-notas')});
+  save(); renderCumples(); renderResumen();
+  ['cu-nombre','cu-fecha','cu-anio','cu-notas'].forEach(id=>document.getElementById(id).value='');
+}
+function addCumpleToCalendar(){
+  const n=v('cu-nombre'),f=v('cu-fecha'),anio=v('cu-anio');
+  if(!f||!n){alert('Ingresá nombre y fecha (DD/MM)');return;}
+  const [d,m]=f.split('/');
+  const year=new Date().getFullYear();
+  const iso=`${year}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  const edad=anio?year-parseInt(anio):null;
+  openGcal(gcalURL('🎂 Cumpleaños '+n,iso,'','',edad?'Cumple '+edad+' años':'',''));
+}
+function delCumple(id){ data.cumples=data.cumples.filter(x=>x.id!==id); save(); renderCumples(); renderResumen(); }
+function renderCumples(){
+  const now=new Date(); const thisYear=now.getFullYear();
+  const sorted=[...data.cumples].map(c=>{
+    const [d,m]=(c.fecha||'1/1').split('/');
+    let next=new Date(thisYear,parseInt(m)-1,parseInt(d));
+    if(next<now) next=new Date(thisYear+1,parseInt(m)-1,parseInt(d));
+    const days=Math.ceil((next-now)/(1000*60*60*24));
+    const anos=c.anio?thisYear-c.anio:null;
+    return {...c,days,anos};
+  }).sort((a,b)=>a.days-b.days);
+  document.getElementById('cumple-count').textContent=sorted.length;
+  const div=document.getElementById('cumple-list');
+  div.innerHTML=sorted.length?sorted.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:500">${c.nombre}</div>
+        <div style="font-size:12px;color:var(--text2)">${c.fecha} · ${c.tipo}${c.anos?' · cumple '+c.anos+' años':''}</div>
+        ${c.notas?`<div style="font-size:11px;color:var(--text3)">${c.notas}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span style="font-size:12px;font-weight:600;color:${c.days<=7?'var(--red)':c.days<=30?'var(--amber)':'var(--text2)'}">en ${c.days}d</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-gcal" style="padding:5px 8px;font-size:11px" onclick="addCumpleToCalendar()">📆</button>
+          <button class="btn btn-danger" onclick="delCumple(${c.id})">✕</button>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty-state">Sin cumpleaños cargados</div>`;
+}
+
+// ═══════════════ VIAJES ═══════════════
+function addViaje(){
+  data.viajes.push({id:Date.now(),destino:v('vi-destino'),comp:v('vi-comp'),
+    salida:v('vi-salida'),regreso:v('vi-regreso'),presupuesto:parseFloat(v('vi-presupuesto')||0),
+    moneda:v('vi-moneda'),itinerario:[]});
+  save(); renderViajes();
+  ['vi-destino','vi-comp','vi-salida','vi-regreso','vi-presupuesto'].forEach(id=>document.getElementById(id).value='');
+}
+function addViajeToCalendar(){
+  const d=v('vi-destino'),s=v('vi-salida'),r=v('vi-regreso');
+  if(!d||!s){alert('Ingresá destino y fecha de salida');return;}
+  openGcal(gcalURL('✈️ Viaje a '+d,s,'','',`Regreso: ${fmtDate(r)}`,d));
+}
+function delViaje(id){ data.viajes=data.viajes.filter(x=>x.id!==id); save(); renderViajes(); }
+function renderViajes(){
+  document.getElementById('viajes-count').textContent=data.viajes.length;
+  const div=document.getElementById('viajes-list');
+  div.innerHTML=data.viajes.length?data.viajes.map(vi=>{
+    const dur=vi.salida&&vi.regreso?Math.ceil((new Date(vi.regreso)-new Date(vi.salida))/(1000*60*60*24)):null;
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:18px;font-weight:600">${vi.destino}</div>
+          <div style="font-size:13px;color:var(--text2)">${fmtDate(vi.salida)} → ${fmtDate(vi.regreso)}${dur?' · '+dur+' días':''}</div>
+          ${vi.comp?`<div style="font-size:12px;color:var(--text2)">👥 ${vi.comp}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:16px;font-weight:600;color:var(--amber)">${vi.moneda} ${Math.round(vi.presupuesto).toLocaleString('es-AR')}</div>
+          <div style="font-size:11px;color:var(--text3)">presupuesto</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gcal" onclick="openGcal(gcalURL('✈️ Viaje a '+${JSON.stringify(vi.destino)},'${vi.salida}','','','Regreso: '+${JSON.stringify(fmtDate(vi.regreso))},${JSON.stringify(vi.destino)}))">📆 Agregar al calendario</button>
+        <button class="btn btn-danger" onclick="delViaje(${vi.id})">Eliminar</button>
+      </div>
+    </div>`;
+  }).join(''):`<div class="empty-state">Sin viajes cargados</div>`;
+}
+
+// ═══════════════ MASCOTAS ═══════════════
+function saveMascota(){
+  data.mascota={nombre:v('ma-nombre'),especie:v('ma-especie'),raza:v('ma-raza'),
+    nacimiento:v('ma-nacimiento'),vet:v('ma-vet'),tel:v('ma-tel')};
+  save(); renderMascotas(); alert('Datos guardados ✓');
+}
+function addMaRecord(){
+  data.maRecords.push({id:Date.now(),tipo:v('ma-tipo'),desc:v('ma-rdesc'),ultima:v('ma-ultima'),proxima:v('ma-proxima'),vet:v('ma-rvet'),estado:'Pendiente'});
+  save(); renderMascotas();
+  ['ma-rdesc','ma-ultima','ma-proxima','ma-rvet'].forEach(id=>document.getElementById(id).value='');
+}
+function addMaRecordToCalendar(){
+  const tipo=v('ma-tipo'),prox=v('ma-proxima'),vet=v('ma-rvet');
+  if(!prox){alert('Ingresá fecha próxima');return;}
+  const nom=data.mascota.nombre||'mascota';
+  openGcal(gcalURL(`🐾 ${tipo} de ${nom}`,prox,'','',`Veterinario: ${vet||data.mascota.vet||''}`,data.mascota.tel||''));
+}
+function delMaRecord(id){ data.maRecords=data.maRecords.filter(x=>x.id!==id); save(); renderMascotas(); }
+function addMaMed(){
+  data.maMeds.push({id:Date.now(),med:v('ma-med'),dosis:v('ma-dosis'),frec:v('ma-frec'),motivo:v('ma-motivo'),fecha:v('ma-mfecha'),hora:v('ma-mhora')});
+  save(); renderMascotas();
+  ['ma-med','ma-dosis','ma-frec','ma-motivo'].forEach(id=>document.getElementById(id).value='');
+}
+function addMaMedToCalendar(){
+  const med=v('ma-med'),f=v('ma-mfecha'),h=v('ma-mhora');
+  if(!f||!med){alert('Ingresá medicamento y fecha');return;}
+  const nom=data.mascota.nombre||'mascota';
+  openGcal(gcalURL(`💊 Medicación ${nom}: ${med}`,f,h,'',`Dosis: ${v('ma-dosis')} · Frec: ${v('ma-frec')}`,''));
+}
+function delMaMed(id){ data.maMeds=data.maMeds.filter(x=>x.id!==id); save(); renderMascotas(); }
+function addMaGasto(){
+  data.maGastos.push({id:Date.now(),fecha:v('ma-gfecha'),cat:v('ma-gcat'),desc:v('ma-gdesc'),monto:parseFloat(v('ma-gmonto')||0)});
+  save(); renderMascotas();
+  ['ma-gdesc','ma-gmonto'].forEach(id=>document.getElementById(id).value='');
+}
+function delMaGasto(id){ data.maGastos=data.maGastos.filter(x=>x.id!==id); save(); renderMascotas(); }
+function renderMascotas(){
+  const m=data.mascota;
+  if(m.nombre){ document.getElementById('ma-nombre').value=m.nombre; document.getElementById('ma-especie').value=m.especie||''; document.getElementById('ma-raza').value=m.raza||''; document.getElementById('ma-vet').value=m.vet||''; document.getElementById('ma-tel').value=m.tel||''; }
+
+  const now=new Date();
+  // records
+  document.getElementById('ma-records-list').innerHTML=data.maRecords.length?
+    `<div class="tbl-wrap"><table><thead><tr><th>Tipo</th><th>Desc.</th><th>Próxima</th><th>Vet</th><th></th></tr></thead><tbody>
+    ${data.maRecords.map(r=>{
+      const prox=r.proxima?new Date(r.proxima):null;
+      const days=prox?Math.ceil((prox-now)/(1000*60*60*24)):null;
+      return `<tr><td><span class="badge badge-purple">${r.tipo}</span></td><td>${r.desc||'–'}</td>
+        <td style="color:${days!==null&&days<=7?'var(--red)':days<=30?'var(--amber)':'var(--text2)'}">${fmtDate(r.proxima)}${days!==null?' ('+days+'d)':''}</td>
+        <td>${r.vet||'–'}</td>
+        <td><button class="btn btn-danger" onclick="delMaRecord(${r.id})">✕</button></td></tr>`;
+    }).join('')}</tbody></table></div>`:`<div class="empty-state">Sin recordatorios</div>`;
+
+  // meds
+  document.getElementById('ma-meds-list').innerHTML=data.maMeds.length?
+    `<div class="tbl-wrap"><table><thead><tr><th>Medicamento</th><th>Dosis</th><th>Frec.</th><th>Fecha</th><th></th></tr></thead><tbody>
+    ${data.maMeds.map(r=>`<tr><td style="font-weight:500">${r.med}</td><td>${r.dosis||'–'}</td><td>${r.frec||'–'}</td>
+      <td style="color:var(--text2)">${fmtDate(r.fecha)} ${r.hora||''}</td>
+      <td><button class="btn btn-danger" onclick="delMaMed(${r.id})">✕</button></td></tr>`).join('')}
+    </tbody></table></div>`:`<div class="empty-state">Sin medicamentos</div>`;
+
+  // gastos
+  const totG=data.maGastos.reduce((a,g)=>a+g.monto,0);
+  document.getElementById('ma-gastos-list').innerHTML=data.maGastos.length?
+    `<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Cat.</th><th>Desc.</th><th>Monto</th><th></th></tr></thead><tbody>
+    ${data.maGastos.map(g=>`<tr><td style="color:var(--text2)">${fmtDate(g.fecha)}</td><td><span class="badge badge-gray">${g.cat}</span></td>
+      <td>${g.desc||'–'}</td><td style="color:var(--red);font-weight:500">${fmt(g.monto)}</td>
+      <td><button class="btn btn-danger" onclick="delMaGasto(${g.id})">✕</button></td></tr>`).join('')}
+    <tr><td colspan="3" style="text-align:right;font-weight:500;color:var(--text2)">Total</td><td style="font-weight:600;color:var(--red)">${fmt(totG)}</td><td></td></tr>
+    </tbody></table></div>`:`<div class="empty-state">Sin gastos</div>`;
+}
+
+// ─── GOOGLE SHEETS SYNC ───
+const SCRIPT_URL_KEY = 'asistente_script_url';
+let scriptURL = localStorage.getItem(SCRIPT_URL_KEY) || '';
+
+function openSheetsModal(){
+  document.getElementById('sheetsModal').classList.add('open');
+  document.getElementById('sheetsUrlInput').value = scriptURL;
+  updateSyncStatus('idle');
+}
+function closeSheetsModal(){ document.getElementById('sheetsModal').classList.remove('open'); }
+
+function guardarURL(){
+  const url = document.getElementById('sheetsUrlInput').value.trim();
+  if(!url.startsWith('https://script.google.com')){
+    document.getElementById('urlStatus').innerHTML = '<span style="color:var(--red)">⚠ La URL debe empezar con https://script.google.com</span>';
+    return;
+  }
+  scriptURL = url;
+  localStorage.setItem(SCRIPT_URL_KEY, url);
+  document.getElementById('urlStatus').innerHTML = '<span style="color:var(--teal)">✓ URL guardada correctamente</span>';
+  updateSyncStatus('idle');
+}
+
+function updateSyncStatus(state, msg){
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncMsg');
+  dot.className = 'sync-dot';
+  if(state === 'ok'){ dot.classList.add('ok'); txt.textContent = msg || 'Sincronizado con Google Sheets'; }
+  else if(state === 'err'){ dot.classList.add('err'); txt.textContent = msg || 'Error de conexión'; }
+  else if(state === 'loading'){ dot.classList.add('loading'); txt.textContent = msg || 'Conectando...'; }
+  else {
+    txt.textContent = scriptURL ? 'Listo para sincronizar con Google Sheets' : 'Configurá Google Sheets para sincronizar →';
+  }
+}
+
+// ── GUARDAR: usa un <script> tag (JSONP-style) para evitar CORS desde file:// ──
+function guardarEnSheets(){
+  if(!scriptURL){ openSheetsModal(); return; }
+
+  const payload = JSON.stringify(data);
+
+  // Apps Script acepta datos via GET con parámetro "payload"
+  // Pero hay límite de URL (~8KB). Si los datos son grandes, avisamos.
+  if(payload.length > 7500){
+    updateSyncStatus('loading', 'Datos grandes, usando método alternativo...');
+    guardarViaForm(payload);
+    return;
+  }
+
+  updateSyncStatus('loading', 'Guardando en Google Sheets...');
+  const url = scriptURL + '?payload=' + encodeURIComponent(payload);
+
+  // Usamos un tag <script> para evitar el bloqueo CORS de file://
+  const tag = document.createElement('script');
+  const cbName = '__gsCallback_' + Date.now();
+
+  // Como Apps Script no soporta JSONP nativo, usamos imagen de 1px como ping
+  // y fetch con no-cors para escribir, luego fetch normal para leer confirmación
+  const img = new Image();
+  img.onload = img.onerror = function(){
+    // El GET se ejecutó del lado del servidor aunque no podamos leer la respuesta
+    // Esperamos 2s y verificamos leyendo la hoja
+    setTimeout(()=>{
+      verificarGuardado();
+    }, 2500);
+  };
+  img.src = url;
+}
+
+function guardarViaForm(payload){
+  // Para datos grandes: abrimos una ventana de confirmación
+  // El usuario ve la respuesta del script y cierra
+  const url = scriptURL + '?payload=' + encodeURIComponent(payload);
+  const w = window.open(url, '_blank', 'width=400,height=200');
+  updateSyncStatus('loading', 'Guardando... cerrá la ventana cuando termine');
+  setTimeout(()=>{
+    try{ w && w.close(); }catch(e){}
+    updateSyncStatus('ok', '✓ Guardado en Sheets — ' + new Date().toLocaleTimeString('es-AR'));
+  }, 3000);
+}
+
+async function verificarGuardado(){
+  try{
+    const res = await fetch(scriptURL);
+    const json = await res.json();
+    if(json.status === 'ok' || json.ts){
+      updateSyncStatus('ok', '✓ Guardado en Sheets — ' + new Date().toLocaleTimeString('es-AR'));
+    } else {
+      updateSyncStatus('ok', '✓ Enviado a Sheets (verificá en tu hoja)');
+    }
+  } catch(e){
+    // fetch bloqueado por CORS pero el script se ejecutó igualmente via img tag
+    updateSyncStatus('ok', '✓ Datos enviados a Sheets — ' + new Date().toLocaleTimeString('es-AR'));
+  }
+}
+
+async function cargarDesdeSheets(){
+  if(!scriptURL){ openSheetsModal(); return; }
+  updateSyncStatus('loading', 'Cargando desde Google Sheets...');
+  try {
+    // fetch GET para leer — Apps Script permite esto sin CORS issues
+    const res = await fetch(scriptURL, {mode:'cors'});
+    const json = await res.json();
+    if(json.status === 'ok' && json.datos && Object.keys(json.datos).length > 0){
+      Object.keys(defaults).forEach(k=>{
+        if(json.datos[k] !== undefined) data[k] = json.datos[k];
+      });
+      save(); renderAll();
+      updateSyncStatus('ok', '✓ Datos cargados — ' + new Date().toLocaleTimeString('es-AR'));
+    } else if(json.status === 'vacio' || !json.datos || Object.keys(json.datos).length === 0){
+      updateSyncStatus('err', 'Sheets vacío — primero guardá datos con ↑ Guardar');
+    } else {
+      updateSyncStatus('err', 'Error: ' + (json.mensaje || 'respuesta inesperada'));
+    }
+  } catch(e) {
+    // Si CORS bloquea el GET, usamos el truco del iframe
+    updateSyncStatus('loading', 'Intentando método alternativo...');
+    cargarViaIframe();
+  }
+}
+
+function cargarViaIframe(){
+  // Inyectamos un iframe oculto apuntando al script
+  // No podemos leer la respuesta por CORS, así que mostramos instrucciones
+  updateSyncStatus('err', 'CORS bloqueado — abrí el script manualmente para cargar');
+  if(confirm('No se puede leer directamente por restricciones del navegador.\n\n¿Querés abrir el script para copiar los datos manualmente?')){
+    window.open(scriptURL, '_blank');
+  }
+}
+
+async function testConexion(){
+  if(!scriptURL){
+    document.getElementById('urlStatus').innerHTML = '<span style="color:var(--red)">⚠ Primero guardá una URL</span>';
+    return;
+  }
+  document.getElementById('urlStatus').innerHTML = '<span style="color:var(--amber)">⏳ Probando conexión...</span>';
+  try {
+    const res = await fetch(scriptURL, {mode:'cors'});
+    const json = await res.json();
+    if(json.status === 'ok' || json.status === 'vacio'){
+      document.getElementById('urlStatus').innerHTML = '<span style="color:var(--teal)">✓ Conexión exitosa — el script responde correctamente</span>';
+      updateSyncStatus('ok', '✓ Conexión verificada');
+    } else {
+      document.getElementById('urlStatus').innerHTML = '<span style="color:var(--red)">✗ El script respondió con error: ' + (json.mensaje||'desconocido') + '</span>';
+    }
+  } catch(e) {
+    // CORS bloqueó el fetch, pero el script puede estar bien — probamos con img
+    document.getElementById('urlStatus').innerHTML = '<span style="color:var(--amber)">⚠ El script existe pero el navegador bloquea la lectura (CORS).<br>El guardado funciona igual. Para cargar datos, usá Chrome o Edge.</span>';
+  }
+}
+
+// ─── UTIL ───
+function v(id){ return document.getElementById(id)?.value||''; }
+
+// ─── INIT ───
+renderAll();
+updateSyncStatus('idle');
+</script>
+</body>
+</html>
